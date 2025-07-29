@@ -1,4 +1,3 @@
-
 /* Copyright 2025 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +38,7 @@ class MainActivity : ComponentActivity() {
         // Initialize the main app class to interact with the APIs:
         homeApp = HomeApp(baseContext, lifecycleScope, this)
         // Initialize the viewmodel representing the main app:
-        homeAppVM = HomeAppViewModel(homeApp)
+        homeAppVM = HomeAppViewModel(homeApp, this)
 
         // Call to make the app allocate the entire screen:
         enableEdgeToEdge()

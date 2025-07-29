@@ -1,4 +1,3 @@
-
 /* Copyright 2025 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +25,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeviceHub
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -85,169 +103,397 @@ fun ActionView (homeAppVM: HomeAppViewModel) {
         scope.launch { draftVM.selectedActionVM.emit(null) }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column {
-            Spacer(Modifier.height(64.dp))
-
-            Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()) {
-                Text(text = stringResource(R.string.action_title_select), fontSize = 32.sp)
-            }
-
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-                Text(stringResource(R.string.action_title_device), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            }
-
-            TextButton(onClick = { expandedDeviceSelection = true }) {
-                Text(text = (actionDeviceVM.value?.name ?: stringResource(R.string.action_text_select)) + " ▾", fontSize = 32.sp)
-            }
-
-            Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
-                Box {
-                    DropdownMenu(expanded = expandedDeviceSelection, onDismissRequest = { expandedDeviceSelection = false }) {
-                        for (deviceVM in deviceVMs) {
-                            DropdownMenuItem(
-                                text = { Text(deviceVM.name) },
-                                onClick = {
-                                    scope.launch {
-                                        actionDeviceVM.value = deviceVM
-                                        actionTrait.value = null
-                                        actionAction.value = null
-                                    }
-                                    expandedDeviceSelection = false
-                                }
-                            )
-                        }
+    Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            // App bar with back button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { 
+                        scope.launch { draftVM.selectedActionVM.emit(null) }
                     }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
+                
+                Text(
+                    text = stringResource(R.string.action_title_select), 
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
 
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-                Text(stringResource(R.string.action_title_trait), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            }
-
-            TextButton(onClick = { expandedTraitSelection = true }, enabled = actionDeviceVM.value != null) {
-                Text(text = (actionTrait.value?.factory?.toString() ?: stringResource(R.string.action_text_select)) + " ▾", fontSize = 32.sp)
-            }
-
-            Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
-                Box {
-                    DropdownMenu(expanded = expandedTraitSelection, onDismissRequest = { expandedTraitSelection = false }) {
-                        val deviceTraits: List<Trait> = actionDeviceVM.value?.traits?.collectAsState()?.value!!
-                        for (trait in deviceTraits) {
-                            DropdownMenuItem(
-                                text = { Text(trait.factory.toString()) },
-                                onClick = {
-                                    scope.launch {
-                                        actionTrait.value = trait
-                                        actionAction.value = null
-                                    }
-                                    expandedTraitSelection = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-                Text(stringResource(R.string.action_title_command), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            }
-
-            TextButton(onClick = { expandedActionSelection = true }, enabled = actionTrait.value != null) {
-                Text(text = (actionAction.value?.toString() ?: stringResource(R.string.action_text_select)) + " ▾", fontSize = 32.sp)
-            }
-
-            Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
-                Box {
-                    DropdownMenu(expanded = expandedActionSelection, onDismissRequest = { expandedActionSelection = false }) {
-                        // ...
-                        if (!ActionViewModel.actionActions.containsKey(actionTrait.value?.factory))
-                            return@DropdownMenu
-
-                        val actions: List<ActionViewModel.Action> = ActionViewModel.actionActions.get(actionTrait.value?.factory)?.actions!!
-                        for (action in actions) {
-                            DropdownMenuItem(
-                                text = { Text(action.toString()) },
-                                onClick = {
-                                    scope.launch {
-                                        actionAction.value = action
-                                    }
-                                    expandedActionSelection = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            when (actionTrait.value?.factory) {
-                 LevelControl -> {
-                    Column (Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-                        Text(stringResource(R.string.action_title_value), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    }
-
-                    Box (Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-                        LevelSlider(value = actionValueLevel.value?.toFloat()!!, low = 0f, high = 254f, steps = 0,
-                            modifier = Modifier.padding(top = 16.dp),
-                            onValueChange = { value : Float -> actionValueLevel.value = value.toUInt().toUByte() },
-                            isEnabled = true
+            // Device Selection Card
+            Card(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeviceHub,
+                            contentDescription = "Device",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.action_title_device),
+                            fontSize = 16.sp, 
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
 
+                    OutlinedButton(
+                        onClick = { expandedDeviceSelection = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = actionDeviceVM.value?.name ?: stringResource(R.string.action_text_select),
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
+                        Box {
+                            DropdownMenu(expanded = expandedDeviceSelection, onDismissRequest = { expandedDeviceSelection = false }) {
+                                for (deviceVM in deviceVMs) {
+                                    DropdownMenuItem(
+                                        text = { Text(deviceVM.name) },
+                                        onClick = {
+                                            scope.launch {
+                                                actionDeviceVM.value = deviceVM
+                                                actionTrait.value = null
+                                                actionAction.value = null
+                                            }
+                                            expandedDeviceSelection = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-                else -> {  }
             }
 
+            // Trait Selection Card
+            Card(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Tune,
+                            contentDescription = "Trait",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.action_title_trait),
+                            fontSize = 16.sp, 
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { expandedTraitSelection = true },
+                        enabled = actionDeviceVM.value != null,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = actionTrait.value?.factory?.toString() ?: stringResource(R.string.action_text_select),
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
+                        Box {
+                            DropdownMenu(expanded = expandedTraitSelection, onDismissRequest = { expandedTraitSelection = false }) {
+                                val deviceTraits: List<Trait> = actionDeviceVM.value?.traits?.collectAsState()?.value!!
+                                for (trait in deviceTraits) {
+                                    DropdownMenuItem(
+                                        text = { Text(trait.factory.toString()) },
+                                        onClick = {
+                                            scope.launch {
+                                                actionTrait.value = trait
+                                                actionAction.value = null
+                                            }
+                                            expandedTraitSelection = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Command Selection Card
+            Card(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Command",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.action_title_command),
+                            fontSize = 16.sp, 
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { expandedActionSelection = true },
+                        enabled = actionTrait.value != null,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = actionAction.value?.toString() ?: stringResource(R.string.action_text_select),
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
+                        Box {
+                            DropdownMenu(expanded = expandedActionSelection, onDismissRequest = { expandedActionSelection = false }) {
+                                if (!ActionViewModel.actionActions.containsKey(actionTrait.value?.factory))
+                                    return@DropdownMenu
+
+                                val actions: List<ActionViewModel.Action> = ActionViewModel.actionActions.get(actionTrait.value?.factory)?.actions!!
+                                for (action in actions) {
+                                    DropdownMenuItem(
+                                        text = { Text(action.toString()) },
+                                        onClick = {
+                                            scope.launch {
+                                                actionAction.value = action
+                                            }
+                                            expandedActionSelection = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Value Selection Card (only show for LevelControl)
+            when (actionTrait.value?.factory) {
+                LevelControl -> {
+                    Card(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Value",
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.action_title_value),
+                                    fontSize = 16.sp, 
+                                    fontWeight = FontWeight.Normal,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+
+                            LevelSlider(
+                                value = actionValueLevel.value?.toFloat()!!, 
+                                low = 0f, 
+                                high = 254f, 
+                                steps = 0,
+                                modifier = Modifier.padding(top = 8.dp),
+                                onValueChange = { value: Float -> actionValueLevel.value = value.toUInt().toUByte() },
+                                isEnabled = true
+                            )
+                        }
+                    }
+                }
+                else -> { /* No additional value input needed for other trait types */ }
+            }
+
+            // Add bottom padding to account for buttons
+            Spacer(modifier = Modifier.height(120.dp))
         }
-        // Buttons to save changes for the action on draft automation:
-        Column(modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter)) {
-            // Check on whether all options are selected:
-            val isOptionsSelected: Boolean =
-                        actionDeviceVM.value != null &&
-                        actionTrait.value != null &&
-                        actionAction.value != null
 
-            if (actionVMs.contains(actionVM)) {
-                // Update action button:
-                Button(
-                    enabled = isOptionsSelected,
-                    onClick = {
-                        scope.launch {
-                            actionVM.deviceVM.emit(actionDeviceVM.value)
-                            actionVM.trait.emit(actionTrait.value)
-                            actionVM.action.emit(actionAction.value)
-                            actionVM.valueLevel.emit(actionValueLevel.value)
+        // Enhanced bottom buttons with card container - positioned at bottom of Box
+        Card(
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+            ),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Check on whether all options are selected:
+                val isOptionsSelected: Boolean =
+                            actionDeviceVM.value != null &&
+                            actionTrait.value != null &&
+                            actionAction.value != null
 
-                            draftVM.selectedActionVM.emit(null)
-                        }
-                    })
-                { Text(stringResource(R.string.action_button_update)) }
-                // Remove action button:
-                Button(
-                    enabled = true,
-                    onClick = {
-                        scope.launch {
-                            draftVM.actionVMs.value.remove(actionVM)
-                            draftVM.selectedActionVM.emit(null)
-                        }
-                    })
-                { Text(stringResource(R.string.action_button_remove)) }
-            } else {
-                // Save action button:
-                Button(
-                    enabled = isOptionsSelected,
-                    onClick = {
-                        scope.launch {
-                            actionVM.deviceVM.emit(actionDeviceVM.value)
-                            actionVM.trait.emit(actionTrait.value)
-                            actionVM.action.emit(actionAction.value)
-                            actionVM.valueLevel.emit(actionValueLevel.value)
+                if (actionVMs.contains(actionVM)) {
+                    // Update action button:
+                    Button(
+                        enabled = isOptionsSelected,
+                        onClick = {
+                            scope.launch {
+                                actionVM.deviceVM.emit(actionDeviceVM.value)
+                                actionVM.trait.emit(actionTrait.value)
+                                actionVM.action.emit(actionAction.value)
+                                actionVM.valueLevel.emit(actionValueLevel.value)
 
-                            draftVM.actionVMs.value.add(actionVM)
-                            draftVM.selectedActionVM.emit(null)
-                        }
-                    })
-                { Text(stringResource(R.string.action_button_create)) }
+                                draftVM.selectedActionVM.emit(null)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Update",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.action_button_update),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Remove action button:
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                draftVM.actionVMs.value.remove(actionVM)
+                                draftVM.selectedActionVM.emit(null)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Remove",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.action_button_remove),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                } else {
+                    // Save action button:
+                    Button(
+                        enabled = isOptionsSelected,
+                        onClick = {
+                            scope.launch {
+                                actionVM.deviceVM.emit(actionDeviceVM.value)
+                                actionVM.trait.emit(actionTrait.value)
+                                actionVM.action.emit(actionAction.value)
+                                actionVM.valueLevel.emit(actionValueLevel.value)
+
+                                draftVM.actionVMs.value.add(actionVM)
+                                draftVM.selectedActionVM.emit(null)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Create",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.action_button_create),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
             }
         }
     }

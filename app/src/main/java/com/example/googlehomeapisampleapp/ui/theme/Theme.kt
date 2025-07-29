@@ -1,4 +1,3 @@
-
 /* Copyright 2025 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,37 +25,87 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-// Dark theme default color palette:
+// Enhanced dark theme color palette
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = PrimaryBlue,
+    onPrimary = OnPrimary,
+    primaryContainer = PrimaryBlueVariant,
+    onPrimaryContainer = OnPrimary,
+    
+    secondary = SecondaryGreen,
+    onSecondary = OnPrimary,
+    secondaryContainer = SecondaryGreen.copy(alpha = 0.3f),
+    onSecondaryContainer = OnSurfaceDark,
+    
+    tertiary = SecondaryOrange,
+    onTertiary = OnPrimary,
+    tertiaryContainer = SecondaryOrange.copy(alpha = 0.3f),
+    onTertiaryContainer = OnSurfaceDark,
+    
+    background = DarkBackground,
+    onBackground = OnBackgroundDark,
+    
+    surface = DarkSurface,
+    onSurface = OnSurfaceDark,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariantDark,
+    
+    error = SecondaryRed,
+    onError = OnPrimary,
+    errorContainer = SecondaryRed.copy(alpha = 0.3f),
+    onErrorContainer = OnSurfaceDark,
+    
+    outline = OnSurfaceVariantDark.copy(alpha = 0.5f),
+    outlineVariant = OnSurfaceVariantDark.copy(alpha = 0.3f)
 )
 
-// Light theme default color palette:
+// Light theme color palette with pastel dark green
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = androidx.compose.ui.graphics.Color(0xFF4A6741),
+    onPrimary = androidx.compose.ui.graphics.Color(0xFFFFFFFF),
+    primaryContainer = androidx.compose.ui.graphics.Color(0xFFE8F5E8),  // Light green container
+    onPrimaryContainer = androidx.compose.ui.graphics.Color(0xFF2E4A2A),  // Darker green
+    
+    secondary = androidx.compose.ui.graphics.Color(0xFF388E3C),
+    onSecondary = androidx.compose.ui.graphics.Color(0xFFFFFFFF),
+    secondaryContainer = androidx.compose.ui.graphics.Color(0xFFE8F5E8),
+    onSecondaryContainer = androidx.compose.ui.graphics.Color(0xFF1B5E20),
+    
+    tertiary = androidx.compose.ui.graphics.Color(0xFFFF7043),
+    onTertiary = androidx.compose.ui.graphics.Color(0xFFFFFFFF),
+    tertiaryContainer = androidx.compose.ui.graphics.Color(0xFFFFE0B2),
+    onTertiaryContainer = androidx.compose.ui.graphics.Color(0xFFBF360C),
+    
+    background = androidx.compose.ui.graphics.Color(0xFFFFF9E3),
+    onBackground = androidx.compose.ui.graphics.Color(0xFF1C1C1C),
+    
+    surface = androidx.compose.ui.graphics.Color(0xFFFFFFFF),
+    onSurface = androidx.compose.ui.graphics.Color(0xFF1C1C1C),
+    surfaceVariant = androidx.compose.ui.graphics.Color(0xFFF5F5F5),
+    onSurfaceVariant = androidx.compose.ui.graphics.Color(0xFF424242),
+    
+    error = androidx.compose.ui.graphics.Color(0xFFD32F2F),
+    onError = androidx.compose.ui.graphics.Color(0xFFFFFFFF),
+    errorContainer = androidx.compose.ui.graphics.Color(0xFFFFEBEE),
+    onErrorContainer = androidx.compose.ui.graphics.Color(0xFFB71C1C),
+    
+    outline = androidx.compose.ui.graphics.Color(0xFFBDBDBD),
+    outlineVariant = androidx.compose.ui.graphics.Color(0xFFE0E0E0)
 )
 
 @Composable
 fun GoogleHomeAPISampleAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false, // Force light theme
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        // If the dynamic color is set and the system supports it, apply dynamic colors:
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (darkTheme) dynamicDarkColorScheme(LocalContext.current)
-            else dynamicLightColorScheme(LocalContext.current)
+            dynamicLightColorScheme(LocalContext.current)
         }
-        // Otherwise, apply a predefined scheme:
-        darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-    // Apply the selected values on theme:
+    
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,

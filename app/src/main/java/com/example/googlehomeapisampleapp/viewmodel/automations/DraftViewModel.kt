@@ -1,4 +1,3 @@
-
 /* Copyright 2025 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +47,7 @@ import com.google.home.matter.standard.Thermostat.Companion.systemMode
 import com.google.home.matter.standard.ThermostatTrait
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class DraftViewModel (val candidateVM: CandidateViewModel? = null) : ViewModel() {
+class DraftViewModel (val candidateVM: CandidateViewModel? = null, val automationVM: AutomationViewModel? = null) : ViewModel() {
 
     private val DRAFT_NAME: String = "New Automation"
     private val DRAFT_DESCRIPTION: String = "New custom automation"
@@ -63,8 +62,21 @@ class DraftViewModel (val candidateVM: CandidateViewModel? = null) : ViewModel()
     val selectedActionVM: MutableStateFlow<ActionViewModel?>
 
     init {
-        name = MutableStateFlow(candidateVM?.name ?: DRAFT_NAME)
-        description = MutableStateFlow(candidateVM?.description ?: DRAFT_DESCRIPTION)
+        // Initialize based on whether we're editing an existing automation or creating new
+        when {
+            automationVM != null -> {
+                name = MutableStateFlow(automationVM.name.value)
+                description = MutableStateFlow(automationVM.description.value)
+            }
+            candidateVM != null -> {
+                name = MutableStateFlow(candidateVM.name)
+                description = MutableStateFlow(candidateVM.description)
+            }
+            else -> {
+                name = MutableStateFlow(DRAFT_NAME)
+                description = MutableStateFlow(DRAFT_DESCRIPTION)
+            }
+        }
 
         starterVMs = MutableStateFlow(mutableListOf())
         actionVMs = MutableStateFlow(mutableListOf())
@@ -72,8 +84,22 @@ class DraftViewModel (val candidateVM: CandidateViewModel? = null) : ViewModel()
         selectedStarterVM = MutableStateFlow(null)
         selectedActionVM = MutableStateFlow(null)
 
-        if (candidateVM != null)
-            parseCandidateVM(candidateVM)
+        when {
+            candidateVM != null -> parseCandidateVM(candidateVM)
+            automationVM != null -> parseAutomationVM(automationVM)
+        }
+    }
+
+    private fun parseAutomationVM(automationVM: AutomationViewModel) {
+        // Note: This is a simplified parsing - in a real implementation,
+        // you would need to reverse-engineer the automation graph back into
+        // StarterVMs and ActionVMs. For now, we'll create empty lists
+        // and let the user rebuild the automation in the editor.
+        
+        // The Google Home API automation structure is complex and may not
+        // perfectly map back to the simple editing interface, so this
+        // provides a starting point for editing the name/description
+        // while requiring the user to reconfigure starters and actions.
     }
 
     fun parseCandidateVM (candidateVM: CandidateViewModel) {

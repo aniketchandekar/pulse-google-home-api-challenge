@@ -1,4 +1,3 @@
-
 /* Copyright 2025 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,30 +15,42 @@ limitations under the License.
 
 package com.example.googlehomeapisampleapp.view.automations
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,8 +67,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.googlehomeapisampleapp.BuildConfig
 import com.example.googlehomeapisampleapp.R
+import com.example.googlehomeapisampleapp.utils.ErrorHandler.safelyLaunch
+import com.example.googlehomeapisampleapp.view.shared.AccountButton
 import com.example.googlehomeapisampleapp.view.shared.TabbedMenuView
 import com.example.googlehomeapisampleapp.viewmodel.HomeAppViewModel
 import com.example.googlehomeapisampleapp.viewmodel.automations.AutomationViewModel
@@ -65,158 +77,291 @@ import com.example.googlehomeapisampleapp.viewmodel.structures.StructureViewMode
 import com.google.home.automation.Action
 import com.google.home.automation.Starter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @Composable
-fun AutomationsAccountButton (homeAppVM: HomeAppViewModel) {
-    var expanded by remember { mutableStateOf(false) }
-    /**
-     * UI Row containing:
-     * - Account Icon Button: triggers a permission request using PermissionsManager.
-     * - Overflow Menu: opens a dropdown with a "Revoke Permissions" option.
-     *
-     * Selecting "Revoke Permissions" launches an intent to Google’s account management
-     * page for manually revoking app access.
-     *
-     */
-    Row {
-        IconButton(
-            onClick = { homeAppVM.homeApp.permissionsManager.requestPermissions() },
-            modifier = Modifier.size(48.dp).background(Color.Transparent)
-        ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "",
-                modifier = Modifier.fillMaxSize(),
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text("Revoke Permissions") },
-                onClick = {
-                    expanded = false
-                    val intent = Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("https://myaccount.google.com/connections/link?project_number=${BuildConfig.GOOGLE_CLOUD_PROJECT_ID}")
-                    )
-                    homeAppVM.homeApp.context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun AutomationsView (homeAppVM: HomeAppViewModel) {
+fun AutomationsView(homeAppVM: HomeAppViewModel) {
     val scope: CoroutineScope = rememberCoroutineScope()
-    var expanded: Boolean by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val structureVMs: List<StructureViewModel> = homeAppVM.structureVMs.collectAsState().value
     val selectedStructureVM: StructureViewModel? = homeAppVM.selectedStructureVM.collectAsState().value
     val structureName: String = selectedStructureVM?.name ?: stringResource(R.string.automations_text_loading)
+    val isLoadingCandidates: Boolean = homeAppVM.isLoadingCandidates.collectAsState().value
     
-    Column {
-        AutomationsTopBar("", listOf { AutomationsAccountButton(homeAppVM) })
+    Box(modifier = Modifier.fillMaxHeight()) {
+        Column(modifier = Modifier.fillMaxHeight()) {
+            CombinedTopBar(
+                homeAppVM = homeAppVM,
+                structureVMs = structureVMs,
+                structureName = structureName,
+                onStructureSelected = { structure ->
+                    scope.safelyLaunch(caller = "AutomationsView") {
+                        homeAppVM.selectedStructureVM.emit(structure)
+                    }
+                }
+            )
 
-        Box (modifier = Modifier.weight(1f)) {
+            Box(modifier = Modifier.weight(1f)) {
+                AutomationListComponent(homeAppVM, snackbarHostState)
 
-            Column {
-                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
-
-                    if (structureVMs.size > 1) {
-                        TextButton(onClick = { expanded = true }) {
-                            Text(text = structureName + " ▾", fontSize = 32.sp)
-                        }
+                FloatingActionButton(
+                    onClick = { homeAppVM.showCandidates() },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.BottomEnd)
+                ) {
+                    if (isLoadingCandidates) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 3.dp
+                        )
                     } else {
-                        TextButton(onClick = { expanded = true }) {
-                            Text(text = structureName, fontSize = 32.sp)
-                        }
+                        Icon(Icons.Default.Add, contentDescription = "Create automation")
                     }
                 }
-
-                Row (horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
-                    Box {
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            for (structure in structureVMs) {
-                                DropdownMenuItem(
-                                    text = { Text(structure.name) },
-                                    onClick = {
-                                        scope.launch { homeAppVM.selectedStructureVM.emit(structure) }
-                                        expanded = false
-                                    }
-                                )
-                            }
+                
+                // Full screen loading overlay when loading candidates
+                if (isLoadingCandidates) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 4.dp
+                            )
+                            Text(
+                                text = "Loading automations...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.padding(top = 16.dp)
+                            )
                         }
                     }
-                }
-
-                Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(weight = 1f, fill = false)) {
-                    AutomationListComponent(homeAppVM)
                 }
             }
-
-            Button(onClick = { homeAppVM.showCandidates() } , modifier = Modifier.padding(16.dp).align(Alignment.BottomEnd)) { Text("+ Create") }
         }
-
-        TabbedMenuView(homeAppVM)
+        
+        // Snackbar host positioned at bottom
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
 @Composable
-fun AutomationListItem (automationVM: AutomationViewModel, homeAppVM: HomeAppViewModel) {
+private fun CombinedTopBar(
+    homeAppVM: HomeAppViewModel,
+    structureVMs: List<StructureViewModel>,
+    structureName: String,
+    onStructureSelected: (StructureViewModel) -> Unit
+) {
+    var expanded: Boolean by remember { mutableStateOf(false) }
+    
+    Box(
+        Modifier
+            .statusBarsPadding() // Add padding for status bar
+            .height(64.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        Row(
+            Modifier
+                .height(64.dp)
+                .fillMaxWidth()
+                .background(Color.Transparent),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Structure selector on the left
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { 
+                    if (structureVMs.size > 1) expanded = true 
+                }
+            ) {
+                Text(
+                    text = structureName,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (structureVMs.size > 1) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Select structure",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            
+            // Account button on the right
+            AccountButton(homeAppVM)
+        }
+        
+        // Dropdown menu for structure selection
+        if (structureVMs.size > 1) {
+            DropdownMenu(
+                expanded = expanded, 
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.padding(start = 0.dp)
+            ) {
+                for (structure in structureVMs) {
+                    DropdownMenuItem(
+                        text = { Text(structure.name) },
+                        onClick = {
+                            onStructureSelected(structure)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AutomationListItem(automationVM: AutomationViewModel, homeAppVM: HomeAppViewModel, snackbarHostState: SnackbarHostState) {
     val scope: CoroutineScope = rememberCoroutineScope()
 
     val automationName: String = automationVM.name.collectAsState().value
     val automationStarters: List<Starter> = automationVM.starters.collectAsState().value
     val automationActions: List<Action> = automationVM.actions.collectAsState().value
+    val automationIsValid: Boolean = automationVM.isValid.collectAsState().value
 
-    val status: String = "" + automationStarters.size + " starters" +
-            " ● " + automationActions.size + " actions"
+    val status: String = "${automationStarters.size} starters • ${automationActions.size} actions"
 
-    Column (Modifier.padding(horizontal = 24.dp, vertical = 8.dp).fillMaxWidth()
-        .clickable { scope.launch { homeAppVM.selectedAutomationVM.emit(automationVM) } }) {
-        Text(automationName, fontSize = 20.sp)
-        Text(status, fontSize = 16.sp)
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .fillMaxWidth()
+            .clickable {
+                scope.safelyLaunch(caller = "AutomationListItem") {
+                    homeAppVM.selectedAutomationVM.emit(automationVM)
+                }
+            },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Play button
+            IconButton(
+                onClick = {
+                    scope.safelyLaunch(caller = "AutomationPlay") {
+                        try {
+                            automationVM.automation.execute()
+                            // Show success snackbar
+                            snackbarHostState.showSnackbar(
+                                message = "$automationName ran successfully!",
+                                withDismissAction = true
+                            )
+                        } catch (e: Exception) {
+                            // Show error snackbar
+                            snackbarHostState.showSnackbar(
+                                message = "Failed to run $automationName: ${e.message}",
+                                withDismissAction = true
+                            )
+                        }
+                    }
+                },
+                enabled = automationIsValid,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Run automation",
+                    tint = if (automationIsValid) MaterialTheme.colorScheme.primary 
+                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Automation details
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = automationName, 
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = status, 
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Settings icon
+            IconButton(
+                onClick = {
+                    scope.safelyLaunch(caller = "AutomationSettings") {
+                        homeAppVM.selectedAutomationVM.emit(automationVM)
+                    }
+                },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Automation settings",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun AutomationListComponent (homeAppVM: HomeAppViewModel) {
-
-    val selectedStructureVM: StructureViewModel = homeAppVM.selectedStructureVM.collectAsState().value ?: return
+fun AutomationListComponent(homeAppVM: HomeAppViewModel, snackbarHostState: SnackbarHostState) {
+    val selectedStructureVM: StructureViewModel = 
+        homeAppVM.selectedStructureVM.collectAsState().value ?: return
 
     val selectedAutomationVMs: List<AutomationViewModel> =
         selectedStructureVM.automationVMs.collectAsState().value
 
-    Column (Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-        Text(stringResource(R.string.automations_title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+    ) {
+        // Automations section title
+        Text(
+            text = stringResource(R.string.automations_title), 
+            fontSize = 18.sp, 
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
 
-    for (automationVM in selectedAutomationVMs) {
-        AutomationListItem(automationVM, homeAppVM)
-    }
-}
-
-@Composable
-fun AutomationsTopBar (title: String, buttons: List<@Composable () -> Unit>) {
-    Box (Modifier.height(64.dp).fillMaxWidth().padding(horizontal = 16.dp)) {
-        Row (Modifier.height(64.dp).fillMaxWidth().background(Color.Transparent), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Text(title, fontSize = 24.sp)
+        // List of automations
+        for (automationVM in selectedAutomationVMs) {
+            AutomationListItem(automationVM, homeAppVM, snackbarHostState)
         }
-
-        Row (Modifier.height(64.dp).fillMaxWidth().background(Color.Transparent), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
-            for (button in buttons) {
-                button()
-            }
-        }
+        
+        // Add bottom padding to account for FAB
+        Box(modifier = Modifier.height(120.dp))
     }
 }

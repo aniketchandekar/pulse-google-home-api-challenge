@@ -1,6 +1,6 @@
 pluginManagement {
     repositories {
-        mavenLocal()
+        gradlePluginPortal()
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -9,7 +9,8 @@ pluginManagement {
             }
         }
         mavenCentral()
-        gradlePluginPortal()
+        // >>> UPDATED: Pointing directly to your Downloads folder <<<
+        maven { url = uri("file:///Users/aniket/Downloads") }
     }
 }
 dependencyResolutionManagement {
@@ -20,9 +21,10 @@ dependencyResolutionManagement {
         // Remote repositories:
         google()
         mavenCentral()
+        // >>> UPDATED: Pointing directly to your Downloads folder <<<
+        maven { url = uri("file:///Users/aniket/Downloads") }
     }
 }
 
 rootProject.name = "Google Home API Sample App"
 include(":app")
- 

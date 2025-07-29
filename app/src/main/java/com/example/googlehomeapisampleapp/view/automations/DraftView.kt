@@ -1,4 +1,3 @@
-
 /* Copyright 2025 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +16,7 @@ limitations under the License.
 package com.example.googlehomeapisampleapp.view.automations
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,11 +27,27 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -73,46 +89,141 @@ fun DraftView (homeAppVM: HomeAppViewModel) {
         scope.launch { homeAppVM.selectedDraftVM.emit(null) }
     }
 
-    Box (modifier = Modifier.fillMaxSize()) {
-
+    Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         Column {
-            Spacer(Modifier.height(64.dp))
+            // App bar with back button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { 
+                        scope.launch { homeAppVM.selectedDraftVM.emit(null) }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                
+                Text(
+                    text = stringResource(R.string.draft_title), 
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+            
+            // Input fields in cards for better visual separation
+            Card(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Name Input:
+                    OutlinedTextField(
+                        value = draftName, 
+                        onValueChange = { scope.launch { draftVM.name.emit(it) } }, 
+                        label = { Text(text = stringResource(R.string.draft_label_name), color = MaterialTheme.colorScheme.onSurface) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedLabelColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Description Input:
+                    OutlinedTextField(
+                        value = draftDescription, 
+                        onValueChange = { scope.launch { draftVM.description.emit(it) } }, 
+                        label = { Text(text = stringResource(R.string.draft_label_description), color = MaterialTheme.colorScheme.onSurface) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedLabelColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+            }
 
-            // Title Text:
-            Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()) {
-                Text(text = stringResource(R.string.draft_title), fontSize = 32.sp)
-            }
-            // Name Input:
-            Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-                TextField(value = draftName, onValueChange = { scope.launch { draftVM.name.emit(it) } }, label = {
-                    Text(text = stringResource(R.string.draft_label_name)) })
-            }
-            // Description Input:
-            Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-                TextField(value = draftDescription, onValueChange = { scope.launch { draftVM.description.emit(it) } }, label = {
-                    Text(text = stringResource(R.string.draft_label_description)) })
-            }
-            // Spacer:
-            Spacer(modifier = Modifier)
             // Expanding Container:
             Column(modifier = Modifier.verticalScroll(rememberScrollState()).weight(weight = 1f, fill = false)) {
                 // Draft Starters:
                 DraftStarterList(draftVM)
                 // Draft Actions:
                 DraftActionList(draftVM)
+                
+                // Add bottom padding to account for create button
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
 
-        // Button to save the draft automation:
-        Row (modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter)) {
+        // Enhanced prominent button to save the draft automation:
+        Card(
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+            ),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
             // Check on whether at least a starter and an action are selected:
             val isOptionsSelected: Boolean = starterVMs.isNotEmpty() && actionVMs.isNotEmpty()
             // Check on whether a name and description are provided:
             val isValueProvided: Boolean = draftName.isNotBlank() || draftDescription.isNotBlank()
-            Button (
+            
+            Button(
                 enabled = isOptionsSelected && isValueProvided && !isPending.value,
-                onClick = { homeAppVM.createAutomation(isPending) })
-            { Text(if(!isPending.value) stringResource(R.string.draft_button_create) else stringResource(R.string.draft_text_creating)) }
+                onClick = { homeAppVM.createAutomation(isPending) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isPending.value) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.padding(start = 8.dp))
+                }
+                Text(
+                    text = if (!isPending.value) stringResource(R.string.draft_button_create) else stringResource(R.string.draft_text_creating),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
@@ -124,21 +235,50 @@ fun DraftStarterList (draftVM: DraftViewModel) {
     val starterVMs: List<StarterViewModel> = draftVM.starterVMs.collectAsState().value
 
     // Starters title:
-    Column (Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-        Text(text = stringResource(R.string.draft_text_starters),
-            fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    Row(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Star,
+            contentDescription = "Starters",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = stringResource(R.string.draft_text_starters),
+            fontSize = 16.sp, 
+            fontWeight = FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
+    
     // For each starter, creating a StarterItem view:
     for (starterVM in starterVMs)
         DraftStarterItem(starterVM, draftVM)
-    // Button to add a new starter:
-    Box (Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-        Column (Modifier.fillMaxWidth().clickable {
+    
+    // Button for adding a new starter:
+    OutlinedButton(
+        onClick = {
             scope.launch { draftVM.selectedStarterVM.emit(StarterViewModel(null)) }
-        }) {
-            Text(text = stringResource(R.string.draft_new_starter_name), fontSize = 20.sp)
-            Text(text = stringResource(R.string.draft_new_starter_description), fontSize = 16.sp)
-        }
+        },
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "Add Starter",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = stringResource(R.string.draft_new_starter_name),
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }
 
@@ -150,12 +290,49 @@ fun DraftStarterItem (starterVM: StarterViewModel, draftVM: DraftViewModel) {
     val starterTrait: TraitFactory<out Trait>? = starterVM.trait.collectAsState().value
 
     // Item to view and select the starter:
-    Box (Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-        Column (Modifier.fillMaxWidth().clickable {
-            scope.launch { draftVM.selectedStarterVM.emit(starterVM) }
-        }) {
-            Text(starterDeviceVM.name, fontSize = 20.sp)
-            Text(starterTrait.toString(), fontSize = 16.sp)
+    Card(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    scope.launch { draftVM.selectedStarterVM.emit(starterVM) }
+                }
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = starterDeviceVM.name, 
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = starterTrait.toString(), 
+                    fontSize = 14.sp, 
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            
+            FilterChip(
+                onClick = { }, // Non-clickable, just for display
+                label = {
+                    Text(
+                        text = "Trigger",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                },
+                selected = false,
+                enabled = false // Makes it non-interactive
+            )
         }
     }
 }
@@ -167,21 +344,50 @@ fun DraftActionList (draftVM: DraftViewModel) {
     val actionVMs: List<ActionViewModel> = draftVM.actionVMs.collectAsState().value
 
     // Actions title:
-    Column (Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-        Text(text = stringResource(R.string.draft_text_actions),
-            fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    Row(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.PlayArrow,
+            contentDescription = "Actions",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = stringResource(R.string.draft_text_actions),
+            fontSize = 16.sp, 
+            fontWeight = FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
+    
     // For each action, creating an ActionItem view:
     for (actionVM in actionVMs)
         DraftActionItem(actionVM, draftVM)
-    // Button to add a new action:
-    Box (Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-        Column (Modifier.fillMaxWidth().clickable {
+    
+    // Button for adding a new action:
+    OutlinedButton(
+        onClick = {
             scope.launch { draftVM.selectedActionVM.emit(ActionViewModel(null)) }
-        }) {
-            Text(text = stringResource(R.string.draft_new_action_name), fontSize = 20.sp)
-            Text(text = stringResource(R.string.draft_new_action_description), fontSize = 16.sp)
-        }
+        },
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "Add Action",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = stringResource(R.string.draft_new_action_name),
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }
 
@@ -193,12 +399,49 @@ fun DraftActionItem (actionVM: ActionViewModel, draftVM: DraftViewModel) {
     val actionTrait: Trait? = actionVM.trait.collectAsState().value
 
     // Item to view and select the action:
-    Box (Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-        Column (Modifier.fillMaxWidth().clickable {
-            scope.launch { draftVM.selectedActionVM.emit(actionVM) }
-        }) {
-            Text(actionDeviceVM.name, fontSize = 20.sp)
-            Text(actionTrait?.factory.toString(), fontSize = 16.sp)
+    Card(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    scope.launch { draftVM.selectedActionVM.emit(actionVM) }
+                }
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = actionDeviceVM.name, 
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = actionTrait?.factory.toString(), 
+                    fontSize = 14.sp, 
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            
+            FilterChip(
+                onClick = { }, // Non-clickable, just for display
+                label = {
+                    Text(
+                        text = "Action",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                },
+                selected = false,
+                enabled = false // Makes it non-interactive
+            )
         }
     }
 }
