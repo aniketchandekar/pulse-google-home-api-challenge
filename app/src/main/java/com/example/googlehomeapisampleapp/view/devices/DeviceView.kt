@@ -423,6 +423,7 @@ fun LevelSlider(value: Float, low: Float, high: Float, steps: Int, onValueChange
     }
 }
 
+@Composable
 fun getDeviceIconAndColor(deviceFactory: Any, isOn: Boolean, isOnline: Boolean, deviceStatus: String): Pair<ImageVector, Color> {
     if (!isOnline) {
         return Pair(Icons.Default.OfflinePin, Color.Red)
