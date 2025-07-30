@@ -74,10 +74,20 @@ Built with Google Home APIs: https://developers.home.google.com/apis
 
 This sample demonstrates how AI can enhance smart home experiences by creating personalized, emotion-aware automation that adapts to users' mental and emotional well-being.
 
+# API Key Management & Security
+
+**Important:** Do NOT expose your Gemini API key in gradle.properties or any source file. Instead, add your API key to `local.properties` (which is git-ignored by default):
+
+```
+GEMINI_API_KEY=your_actual_api_key_here
+```
+
+This ensures your API key is not tracked by git or uploaded to GitHub. If your API key was ever committed or exposed, rotate it immediately in your Google AI Studio dashboard.
+
 # Getting Started with Pulse
 
 1. **Setup Google Home API**: Follow the setup guide at https://developers.home.google.com/apis
-2. **Configure Gemini AI**: Add your Gemini API key to the project
+2. **Configure Gemini AI**: Add your Gemini API key to `local.properties` (see above)
 3. **Install Pulse**: Build and install on your Android device
 4. **Sign In**: Tap "Sign in with Google" to authenticate with your Google Home account
 5. **Add Smart Devices**: Ensure you have compatible devices (lights, thermostats, sensors) in Google Home
